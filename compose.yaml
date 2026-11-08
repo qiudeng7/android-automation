@@ -1,0 +1,22 @@
+# Redroid：容器里跑 Android，和宿主机共用内核。
+# 镜像名后面的参数是 Android 开机参数：
+#   ro.secure=0                     adb shell 默认就是 root
+#   androidboot.redroid_gpu_mode    host 用宿主机 GPU（Mesa），guest 是软件渲染
+services:
+  redroid:
+    image: redroid/redroid:14.0.0-latest
+    privileged: true # Redroid 必需
+    volumes:
+      - redroid-data:/data
+    ports:
+      - "5555:5555" # adb
+      - "65000:65000" # FireRPA
+    command:
+      - ro.secure=0
+      - androidboot.redroid_gpu_mode=host
+      - androidboot.redroid_width=720
+      - androidboot.redroid_height=1280
+      - androidboot.redroid_dpi=320
+
+volumes:
+  redroid-data:
