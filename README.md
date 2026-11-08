@@ -177,151 +177,85 @@ python3 -m venv .venv && .venv/bin/pip install lamda
 
 firerpa 的全部接口可以参考[官方文档](https://device-farm.com/docs/zh/quick-start)
 
-## quickstart redroid
 
-由于抓包和进程逆向都需要 root，又只能折返到linux下的隔离安卓环境思路，这次用 redroid，它最轻量化，和宿主机共享内核，并且 gpu 加速也直接共享宿主机的 mesa 驱动。
+## redroid
 
-启动 redroid 之前，我这边注意到有内核模块需要挂载，如果重启的话要重挂，可能每个人情况不一样，让 AI 修。
+真机测试完 firerpa 之后，我发现抓包和进程逆向都需要 root，又只能折返到 linux 下的隔离安卓环境思路，redroid 相比其他思路显然更优质，它最轻量化，和宿主机共享内核，并且 gpu 加速也直接共享宿主机的 mesa 驱动。
 
+在 redroid 下我成功跑通了 firerpa quickstart，并且也实现了网络抓包。
+
+唯一的问题是，redroid 运行的安卓是 x86 架构的，于是我转而使用我的 MacBook 去运行安卓。
+
+## mac 模拟安卓
+
+mac 模拟安卓也有很多思路，我最后选择了[谷歌官方模拟器](https://developer.android.com/studio?hl=zh-cn)
+
+安卓版本选择 16，系统选 AOSP(Android Open Source)，因为这个可以 root。
+
+启动之后可以成功 abd root 进去:
 ```bash
-sudo modprobe -a \
-  iptable_filter iptable_nat iptable_mangle \
-  ip6table_filter ip6table_nat ip6table_mangle \
-  xt_TPROXY xt_owner xt_mark
+~/Library/Android/sdk/platform-tools/adb -e root
+~/Library/Android/sdk/platform-tools/adb -e shell id
 ```
 
-`docker compose up redroid -d` 启动 redroid，相关配置在 compose 里有注释说明；
+这样 mac 模拟安卓就算成功了
 
-然后连接adb 
+## 小红书抓包测试
 
-```bash
-adb connect localhost:5555
-adb -s localhost:5555 shell getprop sys.boot_completed
-adb -s localhost:5555 shell id
-```
+在测试环境按照之前的方式安装 firerpa，然后还需要安装一些需要测试的社交平台，由于我们用的是 AOSP 无法使用各种第三方的软件商店，可以通过 Aurora store 下载常用软件，aurora 是一个 Google play 的第三方客户端，我们可以手动下载一下然后安装小红书来测试抓包。
 
-### 2. 安装并启动 root FireRPA
+### 安装 FIRERPA
 
-首次安装使用 FireRPA v10.9 的 **x86_64 服务端**；已安装或容器重启后，只执行最后一条启动命令。
+以下命令在仓库目录运行，要求终端能直接使用 `adb`，且模拟器已启动。首次安装下载 ARM64 服务端，校验后解压到设备 `/data`：
 
 ```bash
-mkdir -p .temp
-curl -fL --retry 3 \
-  https://github.com/firerpa/lamda/releases/download/v10.9/lamda-server-x86_64.tar.gz \
-  -o .temp/lamda-server-x86_64.tar.gz &&
-docker compose cp .temp/lamda-server-x86_64.tar.gz redroid:/data/local/tmp/lamda-server-x86_64.tar.gz &&
-docker compose exec -T redroid sh -c \
-  'mkdir -p /data/server && tar -xzf /data/local/tmp/lamda-server-x86_64.tar.gz -C /data/server' &&
-docker compose exec -T redroid sh /data/server/bin/launch.sh
+adb -s emulator-5554 root
+adb -s emulator-5554 wait-for-device
+adb -s emulator-5554 shell id
+
+mkdir -p .temp/downloads
+curl -fL --retry 2 \
+  https://github.com/firerpa/lamda/releases/download/v10.9/lamda-server-arm64-v8a.tar.gz \
+  -o .temp/downloads/lamda-server-arm64-v8a.tar.gz
+echo '88957c04f6cae2e2cc56aaece92cec4074ad72092bc05f1e26e4095de7dedeca  .temp/downloads/lamda-server-arm64-v8a.tar.gz' | shasum -a 256 -c -
+
+adb -s emulator-5554 push .temp/downloads/lamda-server-arm64-v8a.tar.gz /data/local/tmp/
+adb -s emulator-5554 shell tar -C /data -xzf /data/local/tmp/lamda-server-arm64-v8a.tar.gz
+adb -s emulator-5554 shell sh /data/server/bin/launch.sh
+adb -s emulator-5554 forward tcp:65000 tcp:65000
 ```
 
-看到 `llllaamDaa started` 后打开 [FireRPA 控制台](http://100.127.0.7:65000/)；`already running` 表示已启动。数据保存在命名卷中，不要用 `docker compose down -v` 删除它。
 
-### 3. 准备宿主机抓包工具
 
-使用官方仓库中的 [startmitm.py](<lamda/tools/startmitm.py>)：它安装测试 CA，并通过容器内的 iptables 把指定 App 流量转给宿主机 mitmproxy，不占 Android 的 VPN 槽位。
+### 用 Aurora 下载小红书
 
-如果本地还没有 `lamda` 目录，克隆后切到本次使用的提交；已经有该目录则跳过这两条，不要覆盖本地修改：
+通过 [Aurora Store 发布页](https://f-droid.org/en/packages/com.aurora.store/) 安装 Aurora 4.8.4，然后在软件内安装小红书，可以直接用匿名用户安装。
 
-```bash
-git clone https://github.com/firerpa/lamda.git lamda
-git -C lamda checkout a980a38130ba00711311e509e3009301e8ff705a
-```
 
-安装客户端及抓包依赖（本次使用 lamda 10.9、mitmproxy 12.3.1）：
+### 首页推荐抓包
+
+先启动模拟器和 firerpa，打开小红书，首次使用时手动同意隐私协议，保持未登录状态。确认可以在首页看到推荐内容之后，就可以开始测试了。
+
+相关代码放在 `xhs-quickstart/`，在仓库目录里安装依赖，然后运行：
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install 'lamda==10.9' 'mitmproxy==12.3.1' -r lamda/tools/requirements.txt
-mkdir -p .temp/home
+.venv/bin/pip install -r xhs-quickstart/requirements.txt
+.venv/bin/python xhs-quickstart/main.py
 ```
 
-### 4. 只抓测试浏览器的流量
+运行之后，脚本会配置抓包环境，重新启动小红书并点击首页，等首页推荐返回后，把这一批笔记保存下来。这里用 mitmproxy 作为手机访问网络时的中间代理，通过 firerpa 安装测试证书来解密 HTTPS，再用 `adb reverse` 把安卓里的代理端口转发到 Mac。结束时会恢复代理设置并卸载本次安装的证书。
 
-先记录 Android 当前的 IPv6 开关，供结束时恢复。下面的抓包脚本会把它改成 `1`，但脚本退出时不会自动恢复：
+代码也都放在这个目录里：`main.py` 负责操作小红书和整理结果，`capture.py` 负责启动、清理抓包环境，`homefeed_addon.py` 负责从请求里取出首页推荐。
 
-```bash
-docker compose exec -T redroid \
-  cat /proc/sys/net/ipv6/conf/all/disable_ipv6 > .temp/redroid-ipv6-before.txt
-```
+每次运行的结果会放在 `xhs-quickstart/runs/` 下，按时间分目录，终端也会打印本次的完整路径。仓库里保留了一份[抓包示例](xhs-quickstart/runs/example/)，不用运行代码也可以直接在 GitHub 上看[推荐笔记](xhs-quickstart/runs/example/recommendations.json)和[首页截图](xhs-quickstart/runs/example/02-homefeed-captured.jpg)。这次抓到了 19 条去重后的笔记，示例里的临时 token 和 URL 查询参数已去掉，其余运行结果由 `runs/.gitignore` 忽略。
 
-在终端 A 启动抓包并保持运行；不要同时运行多个抓包实例：
+一个运行目录里主要有这些产物：
 
-```bash
-HOME="$PWD/.temp/home" PROXYPORT=38080 \
-.venv/bin/python lamda/tools/startmitm.py \
-  100.127.0.7:org.chromium.webview_shell \
-  --device-side-out-interface eth0 \
-  --listen-host 100.127.0.7 \
-  --web-port 38081 --no-web-open-browser \
-  --save-stream-file "$PWD/.temp/redroid-flows.mitm"
-```
-
-- `org.chromium.webview_shell` 是 Redroid 自带的测试浏览器包名，本节用它完成最小验证。以后抓其他已安装的 App 时，替换此包名，并在该 App 内操作以触发请求；下面的 WebView 启动命令和 httpbin 响应断言仅用于测试浏览器。不要省略包名变成全局抓包。
-- `eth0` 是 Redroid 的网卡。`38080` 是代理端口，必须能从容器访问；`38081` 是 mitmweb 页面端口，只监听宿主机回环地址。
-- `HOME` 只对这条命令生效，让 CA 和私钥保存在项目的 `.temp/home/.mitmproxy/`，不写入用户主目录。不要提交或分享其中的私钥、抓包文件。
-
-等待终端显示 SOCKS 代理和 Web server 已监听。若从另一台电脑看抓包界面，在那台电脑执行：
-
-```bash
-ssh -N -L 38081:127.0.0.1:38081 qiudeng@100.127.0.7
-```
-
-然后在电脑浏览器打开抓包终端输出的 `http://127.0.0.1:38081/?token=...` 完整链接，token 使用本次启动生成的值。
-
-在宿主机终端 B 重开测试浏览器，让它发起新的 HTTPS 连接：
-
-```bash
-adb -s 100.127.0.7:5555 shell am force-stop org.chromium.webview_shell
-adb -s 100.127.0.7:5555 shell am start \
-  -a android.intent.action.VIEW \
-  -d 'https://httpbin.org/get?redroid_capture=verified' \
-  -n org.chromium.webview_shell/.WebViewBrowserActivity
-```
-
-在 mitmweb 找到 `/get?redroid_capture=verified` 请求，确认状态码 `200`，响应 JSON 中有 `args.redroid_capture = "verified"`。本次已实际读到请求头和响应正文，证明 HTTPS 被解密，而不只是代理进程启动成功。SOCKS 模式下列表中的目标主机可能显示 IP，按请求路径或 `Host: httpbin.org` 查找即可。
-
-### 5. 停止抓包与恢复
-
-在终端 A 按 `Ctrl+C`，等待进程退出。正常退出会卸载本次 CA 并停止 gproxy；异常退出可能跳过清理。下面这段用于确保代理停止、CA 卸载，并恢复刚才记录的 IPv6 开关：
-
-```bash
-.venv/bin/python - <<'PY'
-from pathlib import Path
-from lamda.client import Device
-
-d = Device("100.127.0.7")
-ipv6_before = int(Path(".temp/redroid-ipv6-before.txt").read_text().strip())
-if ipv6_before not in (0, 1):
-    raise ValueError("IPv6 开关记录必须是 0 或 1")
-
-try:
-    d.stop_gproxy()
-finally:
-    try:
-        d.uninstall_ca_certificate(".temp/home/.mitmproxy/mitmproxy-ca-cert.pem")
-    finally:
-        result = d.execute_script(
-            f"echo {ipv6_before} > /proc/sys/net/ipv6/conf/all/disable_ipv6"
-        )
-        if result.exitstatus != 0:
-            raise RuntimeError(result.stderr.decode())
-
-print("gproxy_running:", d.is_gproxy_running())  # 应为 False
-PY
-```
-
-抓包文件留在 [.temp/redroid-flows.mitm](<.temp/redroid-flows.mitm>)，退出后也可以用命令查看解密后的内容：
-
-```bash
-HOME="$PWD/.temp/home" .venv/bin/mitmdump \
-  -nr .temp/redroid-flows.mitm --flow-detail 4 '~u redroid_capture=verified'
-```
-
-只停安卓环境时执行 `docker compose down`（不带 `-v`），保留 App 和 FireRPA 数据，下次从启动容器、启动 FireRPA 两步继续。
-
-### 已知问题
-
-- 报 `iptables core tables (FILTER/MANGLE) are not supported`，或 gproxy 看似运行但一直没有请求：先检查宿主机是否加载了第 1 步的全部模块，尤其 `iptable_filter` 和 `ip6table_filter`。不要只看 `is_gproxy_running()` 的布尔值判断成功。
-- 当前组合的 UI 层级读取正常，但 FireRPA 截图接口报空 Bitmap 异常，尚未解决；这不影响上面已验证的 HTTPS 抓包流程。
+- `recommendations.json`：从首页推荐响应里取出的笔记，按 ID 去重。这是接口返回的一批数据，不只是屏幕上同时能看到的几张卡片。
+- `homefeed.jsonl`：首页推荐和频道分类的完整 JSON 响应，每行对应一个请求，包含请求地址、HTTP 状态和响应正文。
+- `summary.json`：这次运行是否成功、抓到了多少条笔记，以及对应的笔记 ID。
+- `01-guest-home.jpg`、`02-homefeed-captured.jpg`：进入首页和抓到推荐后的截图，同名 XML 文件是当时的控件树。
+- `flows.mitm`、`flows.jsonl`、`mitmproxy.log`：完整抓包及代理日志。`flows.mitm` 可以用 mitmweb 打开，`flows.jsonl` 则是请求头、响应头和正文的文本导出。
+- `ca/`、`proxy-before.json`：本次使用的测试证书和运行前的代理设置，供脚本配置和清理环境使用。
 

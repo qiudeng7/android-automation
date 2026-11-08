@@ -1,0 +1,113 @@
+{
+  "package": "com.xingin.xhs",
+  "serial": "emulator-5554",
+  "routing": "system",
+  "app_version": "versionName=9.53.0",
+  "ui": {
+    "home_clicked": true,
+    "guest_indicator_verified": true
+  },
+  "http": {
+    "total_flows": 154,
+    "statuses": {
+      "200": 88,
+      "460": 17,
+      "None": 1
+    },
+    "successful_https_responses": 88,
+    "endpoints": [
+      "GET ci.xiaohongshu.com/system_config/watermark/tiny3_100.jpg",
+      "GET edith.xiaohongshu.com/api/media_strategy/batch_get_strategy",
+      "GET edith.xiaohongshu.com/api/push/get_gesture_guidance_config",
+      "GET edith.xiaohongshu.com/api/push/get_server_racing_result",
+      "GET edith.xiaohongshu.com/api/push/hit_badge_holdout",
+      "GET edith.xiaohongshu.com/api/push/query_badge_exp",
+      "GET edith.xiaohongshu.com/api/sns/celestial/connect/config",
+      "GET edith.xiaohongshu.com/api/sns/reach/msg/query",
+      "GET edith.xiaohongshu.com/api/sns/v1/content/navigator",
+      "GET edith.xiaohongshu.com/api/sns/v1/paddles/pull_shanks",
+      "GET edith.xiaohongshu.com/api/sns/v1/system/cold_start_config",
+      "GET edith.xiaohongshu.com/api/sns/v1/system/switch_config",
+      "GET edith.xiaohongshu.com/api/sns/v1/system_service/config",
+      "GET edith.xiaohongshu.com/api/sns/v1/system_service/launch",
+      "GET edith.xiaohongshu.com/api/sns/v1/tag/reobpage",
+      "GET edith.xiaohongshu.com/api/sns/v1/user/verify/resources/pag",
+      "GET edith.xiaohongshu.com/api/sns/v2/guide/home_guide",
+      "GET edith.xiaohongshu.com/api/sns/v2/user/teenager/status",
+      "GET edith.xiaohongshu.com/api/sns/v3/system_service/flag_exp",
+      "GET edith.xiaohongshu.com/growth/cny2026/access",
+      "GET edith.xiaohongshu.com/speedtest",
+      "GET gslb.xiaohongshu.com/api/gslb/v1/domainNew",
+      "GET gslb.xiaohongshu.com/api/httpdns/v1/domains",
+      "GET rec.xiaohongshu.com/api/sns/v1/followings/reddot",
+      "GET rec.xiaohongshu.com/api/sns/v6/homefeed",
+      "GET rec.xiaohongshu.com/api/sns/v6/homefeed/categories",
+      "HEAD rec.xiaohongshu.com/speedtest",
+      "POST apm-native.xiaohongshu.com/api/collect",
+      "POST as.xiaohongshu.com/api/v1/cfg/android",
+      "POST as.xiaohongshu.com/api/v1/dvf/gch/android",
+      "POST as.xiaohongshu.com/api/v1/register/android",
+      "POST crash.xiaohongshu.com/api/v1/android/session",
+      "POST edith.xiaohongshu.com/api/growth/activity/gift_for_new_user/do_action_v2",
+      "POST edith.xiaohongshu.com/api/growth/beethoven/nuc_reach_decide",
+      "POST edith.xiaohongshu.com/api/matrix/dsl/templates",
+      "POST edith.xiaohongshu.com/api/push/badge/clear_v2",
+      "POST edith.xiaohongshu.com/api/redconfig/dynamic/rule/execute/batch",
+      "POST edith.xiaohongshu.com/api/sns/thoth/decision/result",
+      "POST edith.xiaohongshu.com/api/sns/v1/homefeed/client_downgrade/report",
+      "POST edith.xiaohongshu.com/api/sns/v1/note/detailfeed/preload",
+      "POST edith.xiaohongshu.com/api/sns/v1/onboarding/uginfo",
+      "POST edith.xiaohongshu.com/api/sns/v1/paddles/hit_push_holdout",
+      "POST edith.xiaohongshu.com/api/sns/v1/paddles/pull_configs",
+      "POST edith.xiaohongshu.com/api/sns/v1/system_service/device_params_info",
+      "POST edith.xiaohongshu.com/api/usergrowth/behavior/getflowlist",
+      "POST feresource.xiaohongshu.com/fe/resource/distribute/app",
+      "POST lng.xiaohongshu.com/api/collect",
+      "POST modelportrait.xiaohongshu.com/api/model_portrait/model_score",
+      "POST spider-tracker.xiaohongshu.com/api/spider",
+      "POST t2.xiaohongshu.com/api/collect",
+      "POST www.xiaohongshu.com/api/sns/v1/tag/ads_engage"
+    ],
+    "xhs_flows": 106
+  },
+  "homefeed": {
+    "response_statuses": [
+      200,
+      200
+    ],
+    "category_response_statuses": [
+      200
+    ],
+    "note_count": 19,
+    "note_ids": [
+      "6adcaab3000000002403c664",
+      "6aef25b5000000001200dd3e",
+      "6ae5aba70000000025010120",
+      "6aef105f0000000014029d65",
+      "6aed5112000000002b002815",
+      "6ae77578000000001a015d4f",
+      "6aed2873000000002503862c",
+      "6aed9cc9000000002c001c27",
+      "6ad1e73c00000000120389ab",
+      "6ade91760000000015012fa2",
+      "6adcbc3d00000000250075ce",
+      "6ad7a3e5000000002603944e",
+      "6acf6d090000000014003084",
+      "6af0197e0000000003015f14",
+      "6aed9f2e000000002c007dc4",
+      "6adec828000000000e0362eb",
+      "6aeff5220000000018027a7c",
+      "6aedd260000000002b03ce5a",
+      "6acdb3cd000000001b0301f7"
+    ]
+  },
+  "passed": true,
+  "example": {
+    "source_run": "20261108-234408-867766-xhs",
+    "sanitized": true,
+    "omitted": [
+      "CA certificate and private key",
+      "full capture and proxy log"
+    ]
+  }
+}

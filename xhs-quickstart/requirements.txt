@@ -1,0 +1,2 @@
+lamda==10.9
+mitmproxy==12.3.1
